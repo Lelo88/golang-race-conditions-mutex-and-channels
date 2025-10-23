@@ -17,6 +17,40 @@ var waitgroup sync.WaitGroup
 // to a sync.Mutex which it uses to protect the critical section (the write
 // to `message`). The function calls waitgroup.Done() when it completes so
 // that the caller can wait for all updates.
+func updateMessage(newMessage string) {
+	// Ensure the WaitGroup is decremented when this goroutine returns.
+	defer waitgroup.Done()
+
+	// Critical section: write to the shared variable.
+	message = newMessage
+}
+
+func main() {
+
+	// Initialize the shared state.
+	message = "Hello, World!"
+
+	// We will start 2 goroutines that update `message`.
+	waitgroup.Add(2)
+
+	// Launch goroutines, passing a pointer to the mutex so each goroutine
+	// can lock before writing.
+	go updateMessage("Hello, Go!")
+	go updateMessage("Hello, Concurrency!")
+
+	// Wait for both goroutines to finish.
+	waitgroup.Wait()
+
+	// Print the final value of message. Because updates are synchronized,
+	// there is no data race here.
+	fmt.Println(message)
+}
+
+
+/* // updateMessage updates the global `message` variable. It receives a pointer
+// to a sync.Mutex which it uses to protect the critical section (the write
+// to `message`). The function calls waitgroup.Done() when it completes so
+// that the caller can wait for all updates.
 func updateMessage(newMessage string, mutex *sync.Mutex) {
 	// Ensure the WaitGroup is decremented when this goroutine returns.
 	defer waitgroup.Done()
@@ -55,4 +89,4 @@ func main() {
 	// Print the final value of message. Because updates are synchronized,
 	// there is no data race here.
 	fmt.Println(message)
-}
+} */
